@@ -1,16 +1,22 @@
 from llm_sdk import Small_LLM_Model
-from parse import JsonLoader, Prompt, Definitions
+from parse import JsonLoader, ValidatorError
 import json
 
-prompts = "/goinfre/jtruckse/Call-Me-Maybe/data/input/function_calling_tests.json"
-definitions = "/goinfre/jtruckse/Call-Me-Maybe/data/input/functions_definition.json"
+prompts = "/goinfre/jtruckse/Call-Me-Maybe-42/data/input/function_calling_tests.json"
+definitions = "/goinfre/jtruckse/Call-Me-Maybe-42/data/input/functions_definition.json"
 
 
 def main():
-    prompt: list = JsonLoader(prompts, "prompt")
-    definition: list = JsonLoader(definitions, "definitions")
-    print(prompt)
-    print(definitions)
+    try:
+        prompt = JsonLoader(prompts).promt_validator()
+        definition = JsonLoader(definitions).definitons_validator()
+    except ValidatorError as e:
+        print(e)
+        return
+    # for element in definition:
+    #     print(element.name)
+    # print(type(prompt))
+    # print(type(definitions))
 
 # def main():
 #     llm = Small_LLM_Model()

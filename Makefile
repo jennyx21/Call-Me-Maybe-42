@@ -5,9 +5,10 @@ export HF_HOME=/goinfre/$USER/huggingface
 
 install:
 	uv sync
+	uv sync --project llm_sdk
 
 run: 
-	uv run pyhton src/main.py
+	uv run python src/main.py
 
 lint:
 	flake8 . --exclude llm_sdk

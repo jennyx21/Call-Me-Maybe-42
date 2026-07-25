@@ -1,55 +1,75 @@
 import json
-from dataclasses import dataclass
 from pydantic import BaseModel
+
 
 class ValidatorError(Exception):
     pass
 
-class Prompt(BaseModel):
-    promt: str
 
-class Definitions(BaseModel):
+class Parameter(BaseModel):
+    type: str
+
+
+class ReturnType(BaseModel):
+    type: str
+
+
+class Prompt(BaseModel):
+    prompt: str
+
+
+class Definition(BaseModel):
     name: str
     description: str
-    parameter1: str
-    type_p1: str
-    parameter2: str
-    type_p2: str
-    returns: str
-    type_r: str
+    parameters: dict[str, Parameter]
+    returns: ReturnType
 
 
 class JsonLoader:
-    def __init__(self, file_path: str, m: str):
+    def __init__(self, file_path: str):
         self.file = file_path
-        self.mode = m
         self.data = self.load()
-
-        if self.mode == "prompt":
-            self.promt_validator()
-
-        elif self.mode == "definitions":
-            self.definitons_validator()
 
     def load(self):
         try:
             with open(self.file) as f:
                 daten = json.load(f)
+                if not isinstance(daten, list):
+                    raise ValidatorError("excpected JSON array")
                 return daten
         except FileNotFoundError as e:
             raise ValidatorError(f"file could not be found: {e}")
         except json.JSONDecodeError as e:
-            raise ValidatorError(f"not a correct Json format {e}")
+            raise ValidatorError(f"not a correct Json format: {e}")
 
     def promt_validator(self):
-        prom
+        prompts: list[Prompt] = []
         if len(self.data) == 0:
             raise ValidatorError("no arguments in file")
-        for line in self.data:
+        for item in self.data:
+            try:
+                promt = Prompt(**item)
+                prompts.append(promt)
+            except Exception as e:
+                raise ValidatorError(f"couldn't validate prompts: {e}")
+
+        return prompts
 
 
     def definitons_validator(self):
+        definitions: list[Definition] = []
+        if len(self.data) == 0:
+            raise ValidatorError("no data in definitons file")
+        for item in self.data:
+            try:
+                definition = Definition(**item)
+                definitions.append(definition)
+            except Exception as e:
+                raise ValidatorError(f"couldn't validate definitions: {e}")
 
+        # for ee in definitions:
+        #     print(ee)
+        return definitions
 
 
 # def parser():
