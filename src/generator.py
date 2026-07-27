@@ -29,11 +29,6 @@ def allow_ids(definition: list[Definition], llm: Small_LLM_Model):
 def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):
     p = llm.encode(text)
     token = p[0].tolist()
-    words = prompt.split()
-    for element in words:
-        e_id = llm.encode(element)
-        a_ids.extend(e_id[0].tolist())
-    print(a_ids)
 
     logits = []
     for _ in range(20):
@@ -49,5 +44,7 @@ def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):
         token.append(next_token)
 
         # print(llm.decode(p))
-        print(llm.decode(logits))
+        print(llm.decode(next_token), end="")
+        # print(llm.decode(logits))
+    print()
     return
