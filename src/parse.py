@@ -30,7 +30,7 @@ class JsonLoader:
         self.file = file_path
         self.data = self.load()
 
-    def load(self):
+    def load(self) -> list[str]:
         try:
             with open(self.file) as f:
                 daten = json.load(f)
@@ -42,7 +42,7 @@ class JsonLoader:
         except json.JSONDecodeError as e:
             raise ValidatorError(f"not a correct Json format: {e}")
 
-    def promt_validator(self):
+    def promt_validator(self) -> list[Prompt]:
         prompts: list[Prompt] = []
         if len(self.data) == 0:
             raise ValidatorError("no arguments in file")
@@ -55,8 +55,7 @@ class JsonLoader:
 
         return prompts
 
-
-    def definitons_validator(self):
+    def definitons_validator(self) -> list[Definition]:
         definitions: list[Definition] = []
         if len(self.data) == 0:
             raise ValidatorError("no data in definitons file")
@@ -70,14 +69,3 @@ class JsonLoader:
         # for ee in definitions:
         #     print(ee)
         return definitions
-
-
-# def parser():
-#     with open("/goinfre/jtruckse/Call-Me-Maybe/data/input/function_calling_tests.json", encoding="utf=8") as f:
-#         print(f)
-#         inhalt = json.load(f)
-#         print(inhalt)
-#         print(type(inhalt))
-#         for item in inhalt:
-#             print(item['prompt'])
-#             print(item)

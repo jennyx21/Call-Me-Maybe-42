@@ -1,10 +1,9 @@
-from parse import Prompt, Definition
+from parse import Definition
 import json
 from llm_sdk import Small_LLM_Model
 
 
-def id_to_token():
-    llm = Small_LLM_Model()
+def id_to_token(llm: Small_LLM_Model):
     id_to_token_var = {}
     with open(llm.get_path_to_vocab_file()) as f:
         vocab = json.load(f)
@@ -13,10 +12,8 @@ def id_to_token():
     return id_to_token_var
 
 
-def allow_ids(definition: list[Definition]):
-    llm = Small_LLM_Model()
-    liste = ["{", "}", "[", "]", "function", "name", "arguments", ":", '"',
-             ]
+def allow_ids(definition: list[Definition], llm: Small_LLM_Model):
+    liste = ["{", "}", "[", "]", "function", "name", "arguments", ":", '"']
     allowed = []
     for defi in definition:
         name = llm.encode(defi.name)
@@ -29,30 +26,28 @@ def allow_ids(definition: list[Definition]):
     return allowed
 
 
-def generator(prompt: list[Prompt], id_token: dict[int, str], a_ids: list[str]):
-    llm = Small_LLM_Model()
-    for element in prompt:
-        p = llm.encode(element.prompt)
-        token = p[0].tolist()
+def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):
+    p = llm.encode(text)
+    token = p[0].tolist()
+    words = prompt.split()
+    for element in words:
+        e_id = llm.encode(element)
+        a_ids.extend(e_id[0].tolist())
+    print(a_ids)
 
-        i = 0
-        logits = []
-        while i < 10:
-            logit = llm.get_logits_from_input_ids(token)
-            for tokenid, value in enumerate(logit):
-                # print(tokenid)
-                # print(value)
-                if tokenid not in a_ids:
-                    logit[tokenid] = float("-inf")
+    logits = []
+    for _ in range(20):
+        logit = llm.get_logits_from_input_ids(token)
+        for tokenid, value in enumerate(logit):
+            # print(tokenid)
+            # print(value)
+            if tokenid not in a_ids:
+                logit[tokenid] = float("-inf")
 
-            next_token = logit.index(max(logit))
-            logits.append(next_token)
-            token.append(next_token)
-            i += 1
+        next_token = logit.index(max(logit))
+        logits.append(next_token)
+        token.append(next_token)
 
-        print(llm.decode(p))
+        # print(llm.decode(p))
         print(llm.decode(logits))
     return
-
-
-

@@ -1,7 +1,8 @@
 from llm_sdk import Small_LLM_Model
 from parse import JsonLoader, ValidatorError
-from generator import generator, id_to_token, allow_ids
-import json
+from generator import generator, allow_ids
+# from funktiocall import FunctionCall
+from llm_prompt import llm_prompt
 
 
 prompts = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
@@ -23,18 +24,19 @@ definitions = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
 # print(type(definitions))
 
 def main():
-    id_token = {}
+    llm = Small_LLM_Model()
+    # id_token = {}
     try:
         prompt = JsonLoader(prompts).promt_validator()
         definition = JsonLoader(definitions).definitons_validator()
     except ValidatorError as e:
         print(e)
         return
-    id_token = id_to_token()
-    allowed_ids = allow_ids(definition)
-    generator(prompt, id_token, allowed_ids)
-
-
+    # id_token = id_to_token(llm)
+    allowed_ids = allow_ids(definition, llm)
+    for p in prompt:
+        instructions = llm_prompt(definition, p)
+        generator(instructions, p.prompt, allowed_ids, llm)
 
     # llm = Small_LLM_Model()
     # prompt1 = "what is the sum of 1 + 1, the answer is "
