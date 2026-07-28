@@ -1,4 +1,4 @@
-from parse import Definition, Prompt
+from src.parse import Definition, Prompt
 
 
 def llm_prompt(definitions: list[Definition], prompt: Prompt):

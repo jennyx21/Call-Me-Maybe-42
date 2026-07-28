@@ -1,14 +1,17 @@
 from llm_sdk import Small_LLM_Model
-from parse import JsonLoader, ValidatorError
-from generator import generator, allow_ids
-# from funktiocall import FunctionCall
-from llm_prompt import llm_prompt
+from src.parse import JsonLoader, ValidatorError
+from src.generator import generator, allow_ids
+from src.llm_prompt import llm_prompt
+from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent.parent
 
-prompts = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
-           "input/function_calling_tests.json")
-definitions = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
-               "input/functions_definition.json")
+prompts = str(ROOT / "data" / "input" / "function_calling_tests.json")
+definitions = str(ROOT / "data" / "input" / "functions_definition.json")
+# prompts = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
+#            "input/function_calling_tests.json")
+# definitions = ("/goinfre/jtruckse/Call-Me-Maybe-42/data/"
+#                "input/functions_definition.json")
 
 
 # def main():

@@ -1,4 +1,4 @@
-from parse import Definition
+from src.parse import Definition
 import json
 from llm_sdk import Small_LLM_Model
 

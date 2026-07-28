@@ -1,5 +1,4 @@
 
-
 export UV_CACHE_DIR=/goinfre/$USER/uv-cache uv sync
 export HF_HOME=/goinfre/$USER/huggingface
 
@@ -8,7 +7,7 @@ install:
 	uv sync --project llm_sdk
 
 run: 
-	uv run python src/main.py
+	uv run python -m src
 
 lint:
 	flake8 . --exclude llm_sdk
