@@ -8,13 +8,10 @@ You are a function calling AI.
 Your task:
 1. Choose exactly one function.
 2. Extract the required arguments.
-3. Return ONLY valid JSON.
 Output format:
-{
   "name": "function_name",
   "parameters": {
   }
-}
 <tools>
 """
     for definition in definitions:
@@ -36,4 +33,3 @@ User:
     instructions += prompt.prompt
 
     return instructions
-
