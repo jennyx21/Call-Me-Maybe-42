@@ -1,8 +1,10 @@
 from llm_sdk import Small_LLM_Model
 from src.parse import JsonLoader, ValidatorError
-from src.generator import generator, allow_ids
+from src.funktiocall import FunctionCall
+# from src.generator import generator, allow_ids
 from src.llm_prompt import llm_prompt
 from pathlib import Path
+import json
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,6 +30,7 @@ definitions = str(ROOT / "data" / "input" / "functions_definition.json")
 
 def main():
     llm = Small_LLM_Model()
+
     # id_token = {}
     try:
         prompt = JsonLoader(prompts).promt_validator()
@@ -36,10 +39,25 @@ def main():
         print(e)
         return
     # id_token = id_to_token(llm)
-    allowed_ids = allow_ids(definition, llm)
+    results = []
     for p in prompt:
         instructions = llm_prompt(definition, p)
-        generator(instructions, p.prompt, allowed_ids, llm)
+        # output_raw = generator(instructions, p.prompt, allowed_ids, llm)
+        output_raw = {"name": "fn_something",
+                      "parameters": {"a": 2, "b": 3}}
+        funktion = FunctionCall(name=output_raw["name"],
+                                arguments=output_raw["parameters"])
+        print(funktion)
+        name = funktion.name
+        arguments = funktion.arguments
+            
+        results.append({"prompt": p.prompt, "name": name,
+                        "parameters": arguments})
+
+    output_path = ROOT / "data" / "output" / "function_calling_result.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
 
     # llm = Small_LLM_Model()
     # prompt1 = "what is the sum of 1 + 1, the answer is "

@@ -2,42 +2,38 @@ from src.parse import Definition, Prompt
 
 
 def llm_prompt(definitions: list[Definition], prompt: Prompt):
-    instructions = '''
-<|im_start|> you are a Function calling Ai tool.
-Your job is to choose exactly the right function from the availble tools\
-Read the user's request carefully.
-Choose the function whose description best matches the request.
-Extract all required arguments from the user's request.
-<funktion_name> is one of the funktions in tools.
-and the arguments are contained in the user pormpt string.
+    instructions = """
+You are a function calling AI.
 
-return ONLY valid JSON.
-
+Your task:
+1. Choose exactly one function.
+2. Extract the required arguments.
+3. Return ONLY valid JSON.
+Output format:
 {
-  "name": "fn_add_numbers",
-  "arguments": {
-    "a": 2,
-    "b": 3
+  "name": "function_name",
+  "parameters": {
   }
 }
-Do not explain your answer.
-Do not output any text before or after the JSON.
-
-<tools>\n'''
-
+<tools>
+"""
     for definition in definitions:
-        instructions += f'''
-name: {definition.name}
-description: {definition.description}
-
-</tools>
-'''
+        instructions += f"""
+Function:
+{definition.name}
+Description:
+{definition.description}
+Parameters:
+"""
         for param, info in definition.parameters.items():
-            instructions += f" - {param}: {info.type}"
+            instructions += f"- {param}: {info.type}\n"
+    instructions += """
+</tools>
 
-    instructions += "</tools>\n"
-    instructions += f'''
-    user_input: {prompt.prompt}
-'''
+User:
+"""
+
+    instructions += prompt.prompt
 
     return instructions
+
