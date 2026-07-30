@@ -2,7 +2,6 @@ from llm_sdk import Small_LLM_Model
 from src.parse import JsonLoader, ValidatorError
 from src.funktiocall import FunctionCall
 from src.generator import generator
-from src.llm_prompt import llm_prompt
 from pathlib import Path
 import json
 
@@ -23,15 +22,11 @@ def main():
         return
     results = []
     for p in prompt:
-        instructions = llm_prompt(definition, p)
-        name = generator(instructions, definition, llm)
-        parameter = {"a": 2, "b": 3}
+        name, parameter = generator(definition, llm, p)
         output_raw = {"name": name,
                       "parameters": parameter}
-        print(output_raw)
         funktion = FunctionCall(name=output_raw["name"],
                                 arguments=output_raw["parameters"])
-        print(funktion)
         name = funktion.name
         arguments = funktion.arguments
 

@@ -1,8 +1,8 @@
-from src.parse import Definition
+from src.parse import Definition, Prompt
 from typing import Any
 from llm_sdk import Small_LLM_Model
-from enum import Enum
-#  -> tuple[str, dict[str, Any]]
+from src.llm_prompt import llm_prompt_names, llm_prompt_params
+import re
 
 
 def find_function_name(instruc: list[int],
@@ -25,8 +25,6 @@ def find_function_name(instruc: list[int],
         next_token = logit.index(max(logit))
         instruc.append(next_token)
         generated.append(next_token)
-
-        # print(llm.decode([generated]))
         for defi in definitions:
             if llm.decode(generated) == defi.name:
                 return llm.decode(generated)
@@ -34,12 +32,73 @@ def find_function_name(instruc: list[int],
     return llm.decode(generated)
 
 
+def generate_number_param(instruc: list[int], llm: Small_LLM_Model, prompt: Prompt):
+    generated = []
+    numbers = re.findall(r"\d+", prompt.prompt)
+    print(numbers)
 
-def generator(text: str, definitions: list[Definition], llm: Small_LLM_Model) -> str:
-    p = llm.encode(text)
-    token = p[0].tolist()
-    name = find_function_name(token, definitions, llm)
-    return name
+    while 1:
+        logit = llm.get_logits_from_input_ids(instruc)
+        next_token = logit.index(max(logit))
+        instruc.append(next_token)
+        print(llm.decode(next_token))
+        try:
+            int(llm.decode(next_token))
+            if int(llm.decode(next_token)) in numbers:
+                numbers.remove(int(llm.decode(generated)))
+        except ValueError:
+            return llm.decode(generated)
+        generated.append(next_token)
+
+
+
+def find_parameter(instruc: list[int], llm: Small_LLM_Model,
+                   definition: Definition, prompt: Prompt):
+    result_list = {}
+
+    result = ""
+    parameter = ""
+
+    for param in definition.parameters:
+        print(param)
+        print(definition.parameters[param].type)
+        if definition.parameters[param].type == "number":
+            print("this needs to be a number")
+            res = generate_number_param(instruc, llm, prompt)
+            try:
+                parameter = int(res)
+            except Exception:
+                continue
+        elif definition.parameters[param].type == "string":
+            print("this needs to be a string")
+            parameter = "hallo"
+        result = f"'{param}': {parameter}"
+        result_list[param] = parameter
+        print(result)
+
+    return result_list
+
+
+        # result_list.exted(result)
+#  tuple[str, dict[str, Any]]:
+
+
+def generator(definitions: list[Definition], llm: Small_LLM_Model,
+              prompt: Prompt):
+    text_names = llm_prompt_names(definitions, prompt)
+    final_defi: Definition
+    p_name = llm.encode(text_names)
+    token_name = p_name[0].tolist()
+    name = find_function_name(token_name, definitions, llm)
+    for defi in definitions:
+        if name == defi.name:
+            text_params = llm_prompt_params(defi, prompt)
+            p_param = llm.encode(text_params)
+            token_params = p_param[0].tolist()
+            final_defi = defi
+    params = find_parameter(token_params, llm, final_defi, prompt)
+    print(params)
+    return name, params
 
 
 # def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):
@@ -54,8 +113,8 @@ def generator(text: str, definitions: list[Definition], llm: Small_LLM_Model) ->
              #  next_token = logit.index(max(logit))
              #  logits.append(next_token)
              #  generated.append(next_token)
-             #  token.append(next_token) 
+             #  token.append(next_token)
              # # print(llm.decode(p))
-             #  print(llm.decode(next_token), end="") 
+             #  print(llm.decode(next_token), end="")
              # # print(llm.decode(logits)) print()
              # return llm.decode(generated)

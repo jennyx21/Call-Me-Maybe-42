@@ -1,7 +1,7 @@
 from src.parse import Definition, Prompt
 
 
-def llm_prompt(definitions: list[Definition], prompt: Prompt):
+def llm_prompt_names(definitions: list[Definition], prompt: Prompt):
     instructions = """\
 <|im_start|>system
 You are a function calling AI.
@@ -21,11 +21,6 @@ Function:
 {definition.name}
 Description:
 {definition.description}
-Parameters:
-"""
-        for param, info in definition.parameters.items():
-            instructions += f"- {param}: {info.type}\n"
-    instructions += """
 <|im_end|>\n
 </tools>
 
@@ -34,4 +29,33 @@ User:
 
     instructions += prompt.prompt
 
+    return instructions
+
+
+def llm_prompt_params(definition: Definition, prompt: Prompt):
+    instructions = """\
+<|im_start|>system.
+
+You are a function parameter extraction AI.
+
+Your task:
+Extract the parameters from the user request and fill the function arguments.
+
+Rules:.
+- Do not add extra parameters.
+- Use the correct type for each parameter.
+- Only use information from the user request.\
+
+Function:
+"""
+    for param in definition.parameters:
+        instructions += f"""
+type: {definition.parameters[param].type}
+"""
+    instructions += f"""
+User request:
+{prompt.prompt}
+
+Output:
+"""
     return instructions

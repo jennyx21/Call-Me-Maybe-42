@@ -65,7 +65,4 @@ class JsonLoader:
                 definitions.append(definition)
             except Exception as e:
                 raise ValidatorError(f"couldn't validate definitions: {e}")
-
-        # for ee in definitions:
-        #     print(ee)
         return definitions
