@@ -24,25 +24,24 @@ def main():
     results = []
     for p in prompt:
         instructions = llm_prompt(definition, p)
-        generator(instructions, definition, llm)
-    #     name = "name"
-    #     parameter = {"a": 2, "b": 3}
-    #     output_raw = {"name": name,
-    #                   "parameters": parameter}
-    #     print(output_raw)
-    #     funktion = FunctionCall(name=output_raw["name"],
-    #                             arguments=output_raw["parameters"])
-    #     print(funktion)
-    #     name = funktion.name
-    #     arguments = funktion.arguments
+        name = generator(instructions, definition, llm)
+        parameter = {"a": 2, "b": 3}
+        output_raw = {"name": name,
+                      "parameters": parameter}
+        print(output_raw)
+        funktion = FunctionCall(name=output_raw["name"],
+                                arguments=output_raw["parameters"])
+        print(funktion)
+        name = funktion.name
+        arguments = funktion.arguments
 
-    #     results.append({"prompt": p.prompt, "name": name,
-    #                     "parameters": arguments})
+        results.append({"prompt": p.prompt, "name": name,
+                        "parameters": arguments})
 
-    # output_path = ROOT / "data" / "output" / "function_calling_result.json"
-    # output_path.parent.mkdir(parents=True, exist_ok=True)
-    # with open(output_path, "w", encoding="utf-8") as f:
-    #     json.dump(results, f, indent=2)
+    output_path = ROOT / "data" / "output" / "function_calling_result.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2)
 
 
 if __name__ == "__main__":

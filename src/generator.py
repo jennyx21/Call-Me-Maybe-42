@@ -4,16 +4,20 @@ from llm_sdk import Small_LLM_Model
 from enum import Enum
 #  -> tuple[str, dict[str, Any]]
 
+
 def find_function_name(instruc: list[int],
                        definitions: list[Definition],
                        llm: Small_LLM_Model):
-    allowed = []
-    for defi in definitions:
-        name = defi.name
-        name_encoded = llm.encode(name)
-        allowed.extend(name_encoded[0].tolist())
     generated = []
-    for _ in range(7):
+    i = 0
+    while i < 100:
+        allowed = []
+        for defi in definitions:
+            name = defi.name
+            name_encoded = llm.encode(name)
+            name_list = name_encoded[0].tolist()
+            if len(name_list) > i:
+                allowed.append(name_list[i])
         logit = llm.get_logits_from_input_ids(instruc)
         for tokenid, value in enumerate(logit):
             if tokenid not in allowed:
@@ -22,7 +26,12 @@ def find_function_name(instruc: list[int],
         instruc.append(next_token)
         generated.append(next_token)
 
-        print(llm.decode([generated]))
+        # print(llm.decode([generated]))
+        for defi in definitions:
+            if llm.decode(generated) == defi.name:
+                return llm.decode(generated)
+        i += 1
+    return llm.decode(generated)
 
 
 
@@ -30,6 +39,7 @@ def generator(text: str, definitions: list[Definition], llm: Small_LLM_Model) ->
     p = llm.encode(text)
     token = p[0].tolist()
     name = find_function_name(token, definitions, llm)
+    return name
 
 
 # def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):

@@ -7,15 +7,12 @@ def llm_prompt(definitions: list[Definition], prompt: Prompt):
 You are a function calling AI.
 
 Your task:
-1. Choose exactly one function.
-2. Extract the required arguments.
-3. Return ONLY valid JSON.
-Output format:
-{
-  "name": "function_name",
-  "parameters":{
-  }
-}
+Chose exactly one funtion from <tools></tools>.
+a function STARTS with "fn"
+Example:
+
+"name" = FN_ADD_NUMBER
+
 <tools>
 """
     for definition in definitions:
