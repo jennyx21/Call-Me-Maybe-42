@@ -2,7 +2,8 @@ from src.parse import Definition, Prompt
 
 
 def llm_prompt(definitions: list[Definition], prompt: Prompt):
-    instructions = """
+    instructions = """\
+<|im_start|>system
 You are a function calling AI.
 
 Your task:
@@ -28,6 +29,7 @@ Parameters:
         for param, info in definition.parameters.items():
             instructions += f"- {param}: {info.type}\n"
     instructions += """
+<|im_end|>\n
 </tools>
 
 User:

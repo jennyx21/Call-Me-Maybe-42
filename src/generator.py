@@ -7,6 +7,23 @@ from enum import Enum
 def find_function_name(instruc: list[int],
                        definitions: list[Definition],
                        llm: Small_LLM_Model):
+    allowed = []
+    for defi in definitions:
+        name = defi.name
+        name_encoded = llm.encode(name)
+        allowed.extend(name_encoded[0].tolist())
+    generated = []
+    for _ in range(7):
+        logit = llm.get_logits_from_input_ids(instruc)
+        for tokenid, value in enumerate(logit):
+            if tokenid not in allowed:
+                logit[tokenid] = float("-inf")
+        next_token = logit.index(max(logit))
+        instruc.append(next_token)
+        generated.append(next_token)
+
+        print(llm.decode([generated]))
+
 
 
 def generator(text: str, definitions: list[Definition], llm: Small_LLM_Model) -> str:
