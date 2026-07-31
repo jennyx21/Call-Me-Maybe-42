@@ -32,39 +32,80 @@ def find_function_name(instruc: list[int],
     return llm.decode(generated)
 
 
-def generate_number_param(instruc: list[int], llm: Small_LLM_Model, prompt: Prompt):
+def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
+                          numbers: list[Any]):
     generated = []
-    numbers = re.findall(r"\d+", prompt.prompt)
-    print(numbers)
 
     while 1:
+        allowed = []
+        for element in numbers:
+            allowed.extend(llm.encode(element)[0].tolist())
+        allowed.append(llm.encode(",")[0].tolist())
         logit = llm.get_logits_from_input_ids(instruc)
+        for tokenid, value in enumerate(logit):
+            if tokenid not in allowed:
+                logit[tokenid] = float("-inf")
         next_token = logit.index(max(logit))
+        print(llm.decode(next_token))
+        try:
+            float(llm.decode(next_token))
+        except ValueError:
+            return llm.decode(generated)
+        if llm.decode(generated) in numbers:
+            return llm.decode(generated)
+
         instruc.append(next_token)
+        generated.append(next_token)
+
+
+def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
+                           numbers: list[Any]):
+    generated = []
+
+    while 1:
+        allowed = []
+        for element in numbers:
+            allowed.extend(llm.encode(element)[0].tolist())
+        allowed.append(llm.encode(",")[0].tolist())
+        logit = llm.get_logits_from_input_ids(instruc)
+        for tokenid, value in enumerate(logit):
+            if tokenid not in allowed:
+                logit[tokenid] = float("-inf")
+        next_token = logit.index(max(logit))
         print(llm.decode(next_token))
         try:
             int(llm.decode(next_token))
-            if int(llm.decode(next_token)) in numbers:
-                numbers.remove(int(llm.decode(generated)))
         except ValueError:
             return llm.decode(generated)
-        generated.append(next_token)
+        if llm.decode(generated) in numbers:
+            return llm.decode(generated)
 
+        instruc.append(next_token)
+        generated.append(next_token)
 
 
 def find_parameter(instruc: list[int], llm: Small_LLM_Model,
                    definition: Definition, prompt: Prompt):
     result_list = {}
+    numbers = re.findall(r"\d+", prompt.prompt)
 
     result = ""
     parameter = ""
 
     for param in definition.parameters:
+        instruc_cp = instruc
         print(param)
         print(definition.parameters[param].type)
         if definition.parameters[param].type == "number":
             print("this needs to be a number")
-            res = generate_number_param(instruc, llm, prompt)
+            res = generate_number_param(instruc_cp, llm, numbers)
+            try:
+                parameter = float(res)
+            except Exception:
+                continue
+        elif definition.parameters[param].type == "integer":
+            print("this needs to be a number")
+            res = generate_integer_param(instruc_cp, llm, numbers)
             try:
                 parameter = int(res)
             except Exception:
@@ -77,10 +118,6 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
         print(result)
 
     return result_list
-
-
-        # result_list.exted(result)
-#  tuple[str, dict[str, Any]]:
 
 
 def generator(definitions: list[Definition], llm: Small_LLM_Model,
@@ -100,21 +137,3 @@ def generator(definitions: list[Definition], llm: Small_LLM_Model,
     print(params)
     return name, params
 
-
-# def generator(text: str, prompt: str, a_ids: list[str], llm: Small_LLM_Model):
-#     p = llm.encode(text) token = p[0].tolist() generated = []
-#     logits = [] 
-#     for _ in range(20):
-#         
-#         for tokenid, value in enumerate(logit):
-             # print(tokenid) # print(value)
-             #  if tokenid not in a_ids:
-             #  logit[tokenid] = float("-inf")
-             #  next_token = logit.index(max(logit))
-             #  logits.append(next_token)
-             #  generated.append(next_token)
-             #  token.append(next_token)
-             # # print(llm.decode(p))
-             #  print(llm.decode(next_token), end="")
-             # # print(llm.decode(logits)) print()
-             # return llm.decode(generated)
