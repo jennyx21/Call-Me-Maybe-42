@@ -1,8 +1,16 @@
 from src.parse import Definition, Prompt
 from typing import Any
 from llm_sdk import Small_LLM_Model
+import json
+import math
 from src.llm_prompt import llm_prompt_names, llm_prompt_params
 import re
+
+HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+SIMPLE_ESCAPES = frozenset('"\\/bfnrt')
+
+class ParameterExtractionError(ValueError):
+    """Raised when a parameter cannot be extracted under its constraints."""
 
 
 def find_function_name(instruc: list[int],
@@ -46,7 +54,6 @@ def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
             if tokenid not in allowed:
                 logit[tokenid] = float("-inf")
         next_token = logit.index(max(logit))
-        print(llm.decode(next_token))
         try:
             float(llm.decode(next_token))
         except ValueError:
@@ -72,7 +79,6 @@ def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
             if tokenid not in allowed:
                 logit[tokenid] = float("-inf")
         next_token = logit.index(max(logit))
-        print(llm.decode(next_token))
         try:
             int(llm.decode(next_token))
         except ValueError:
@@ -84,6 +90,112 @@ def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
         generated.append(next_token)
 
 
+def _json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
+    """Return (valid_prefix, complete) for a JSON string scalar."""
+    if not raw_value.startswith('"'):
+        return False, False
+
+    state = "normal"
+    unicode_digits_left = 0
+
+    for index, character in enumerate(raw_value[1:], start=1):
+        if state == "normal":
+            if character == '"':
+                complete = index == len(raw_value) - 1
+                return complete, complete
+            if character == "\\":
+                state = "escape"
+            elif ord(character) < 0x20:
+                return False, False
+        elif state == "escape":
+            if character in SIMPLE_ESCAPES:
+                state = "normal"
+            elif character == "u":
+                state = "unicode"
+                unicode_digits_left = 4
+            else:
+                return False, False
+        else:
+            if character not in HEX_DIGITS:
+                return False, False
+            unicode_digits_left -= 1
+            if unicode_digits_left == 0:
+                state = "normal"
+
+    return True, False
+
+
+def highest_valid_string_token(
+    input_tokens: list[int],
+    generated_tokens: list[int],
+    llm: Small_LLM_Model,
+) -> tuple[int, str, bool]:
+    logits = llm.get_logits_from_input_ids(input_tokens)
+    previous_raw_value = llm.decode(generated_tokens)
+
+    for _ in range(len(logits)):
+        token_id = max(range(len(logits)), key=logits.__getitem__)
+        if math.isinf(logits[token_id]) and logits[token_id] < 0:
+            break
+
+        raw_value = llm.decode(generated_tokens + [token_id])
+        is_valid, is_complete = _json_string_prefix_state(raw_value)
+        if raw_value != previous_raw_value and is_valid:
+            return token_id, raw_value, is_complete
+
+        logits[token_id] = float("-inf")
+
+    raise ParameterExtractionError(
+        "the model has no valid token for the JSON string"
+    )
+
+
+def generate_string_param(
+    prompt_text: str,
+    llm: Small_LLM_Model,
+    max_tokens: int = 128,
+) -> str:
+    """Generate and decode one constrained JSON string scalar."""
+    if max_tokens <= 0:
+        raise ParameterExtractionError("max_tokens must be greater than zero")
+
+    # prompt_tokens = llm.encode(prompt_text)[0].tolist()
+    generated_tokens = llm.encode('"')[0].tolist()
+    if llm.decode(generated_tokens) != '"':
+        raise ParameterExtractionError(
+            "the tokenizer cannot encode the JSON opening quote exactly"
+        )
+
+    input_tokens = prompt_text + generated_tokens
+    raw_value = '"'
+
+    for _ in range(max_tokens):
+        token_id, raw_value, is_complete = highest_valid_string_token(
+            input_tokens,
+            generated_tokens,
+            llm,
+        )
+        generated_tokens.append(token_id)
+        input_tokens.append(token_id)
+
+        if is_complete:
+            try:
+                value = json.loads(raw_value)
+            except json.JSONDecodeError as exc:
+                raise ParameterExtractionError(
+                    "the generated string is not valid JSON"
+                ) from exc
+            if not isinstance(value, str):
+                raise ParameterExtractionError(
+                    "the generated JSON value is not a string"
+                )
+            return value
+
+    raise ParameterExtractionError(
+        f"JSON string did not finish within {max_tokens} tokens"
+    )
+
+
 def find_parameter(instruc: list[int], llm: Small_LLM_Model,
                    definition: Definition, prompt: Prompt):
     result_list = {}
@@ -93,26 +205,25 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
     parameter = ""
 
     for param in definition.parameters:
-        instruc_cp = instruc
+        instruc_cp = instruc.copy()
         print(param)
-        print(definition.parameters[param].type)
         if definition.parameters[param].type == "number":
-            print("this needs to be a number")
             res = generate_number_param(instruc_cp, llm, numbers)
             try:
                 parameter = float(res)
+                numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "integer":
-            print("this needs to be a number")
             res = generate_integer_param(instruc_cp, llm, numbers)
             try:
                 parameter = int(res)
+                numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "string":
             print("this needs to be a string")
-            parameter = "hallo"
+            parameter = generate_string_param(instruc_cp, llm)
         result = f"'{param}': {parameter}"
         result_list[param] = parameter
         print(result)

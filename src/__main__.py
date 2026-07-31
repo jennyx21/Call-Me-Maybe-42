@@ -7,11 +7,11 @@ import json
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# prompts = str(ROOT / "data" / "input" / "function_calling_tests.json")
-# definitions = str(ROOT / "data" / "input" / "functions_definition.json")
+prompts = str(ROOT / "data" / "input" / "function_calling_tests.json")
+definitions = str(ROOT / "data" / "input" / "functions_definition.json")
 
-prompts = str(ROOT / "moulinette" / "data" / "input" / "function_calling_tests.json")
-definitions = str(ROOT / "moulinette" / "data" / "input" / "functions_definition.json")
+# prompts = str(ROOT / "moulinette" / "data" / "input" / "function_calling_tests.json")
+# definitions = str(ROOT / "moulinette" / "data" / "input" / "functions_definition.json")
 
 
 def main():
@@ -36,7 +36,8 @@ def main():
         results.append({"prompt": p.prompt, "name": name,
                         "parameters": arguments})
 
-    output_path = ROOT / "moulinette" / "data" / "output" / "function_calling_result.json"
+    output_path = ROOT / "data" / "output" / "function_calling_result.json"
+    # output_path = ROOT / "moulinette" / "data" / "output" / "function_calling_result.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
