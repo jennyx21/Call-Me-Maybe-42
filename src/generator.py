@@ -6,7 +6,7 @@ import math
 from src.llm_prompt import llm_prompt_names, llm_prompt_params
 import re
 
-HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+
 SIMPLE_ESCAPES = frozenset('"\\/bfnrt')
 
 
@@ -91,13 +91,12 @@ def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
         generated.append(next_token)
 
 
-def _json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
+def json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
     """Return (valid_prefix, complete) for a JSON string scalar."""
     if not raw_value.startswith('"'):
         return False, False
 
     state = "normal"
-    unicode_digits_left = 0
 
     for index, character in enumerate(raw_value[1:], start=1):
         if state == "normal":
@@ -106,31 +105,18 @@ def _json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
                 return complete, complete
             if character == "\\":
                 state = "escape"
-            elif ord(character) < 0x20:
+            elif ord(character) < 32:
                 return False, False
         elif state == "escape":
             if character in SIMPLE_ESCAPES:
-                state = "normal"
-            elif character == "u":
-                state = "unicode"
-                unicode_digits_left = 4
-            else:
-                return False, False
-        else:
-            if character not in HEX_DIGITS:
-                return False, False
-            unicode_digits_left -= 1
-            if unicode_digits_left == 0:
                 state = "normal"
 
     return True, False
 
 
-def highest_valid_string_token(
-    input_tokens: list[int],
-    generated_tokens: list[int],
-    llm: Small_LLM_Model,
-) -> tuple[int, str, bool]:
+def highest_valid_string_token(input_tokens: list[int],
+                               generated_tokens: list[int],
+                               llm: Small_LLM_Model) -> tuple[int, str, bool]:
     logits = llm.get_logits_from_input_ids(input_tokens)
     previous_raw_value = llm.decode(generated_tokens)
 
@@ -138,9 +124,8 @@ def highest_valid_string_token(
         token_id = max(range(len(logits)), key=logits.__getitem__)
         if math.isinf(logits[token_id]) and logits[token_id] < 0:
             break
-
         raw_value = llm.decode(generated_tokens + [token_id])
-        is_valid, is_complete = _json_string_prefix_state(raw_value)
+        is_valid, is_complete = json_string_prefix_state(raw_value)
         if raw_value != previous_raw_value and is_valid:
             return token_id, raw_value, is_complete
 
@@ -151,16 +136,12 @@ def highest_valid_string_token(
     )
 
 
-def generate_string_param(
-    prompt_text: list[int],
-    llm: Small_LLM_Model,
-    max_tokens: int = 128,
-) -> str:
+def generate_string_param(prompt_text: list[int], llm: Small_LLM_Model,
+                          max_tokens: int = 128) -> str:
     """Generate and decode one constrained JSON string scalar."""
     if max_tokens <= 0:
         raise ParameterExtractionError("max_tokens must be greater than zero")
 
-    # prompt_tokens = llm.encode(prompt_text)[0].tolist()
     generated_tokens = llm.encode('"')[0].tolist()
     if llm.decode(generated_tokens) != '"':
         raise ParameterExtractionError(
