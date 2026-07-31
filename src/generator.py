@@ -197,43 +197,40 @@ def generate_string_param(
     )
 
 
-def find_parameter(instruc: list[int], llm: Small_LLM_Model,
+def find_parameter(llm: Small_LLM_Model,
                    definition: Definition,
-                   prompt: Prompt) -> dict[str, str]:
-    result_list = {}
+                   prompt: Prompt) -> dict[str, str | float | int]:
+    result_list: dict[str, str | float | int] = {}
     numbers = re.findall(r"\d+", prompt.prompt)
-
-    result = ""
-    parameter = ""
+    parameter: str | float | int
 
     for param in definition.parameters:
-        print(param)
+        text_params = llm_prompt_params(definition, prompt, param, result_list)
+        p_param = llm.encode(text_params)
+        instruc = p_param[0].tolist()
         if definition.parameters[param].type == "number":
             res = generate_number_param(instruc, llm, numbers)
             try:
-                parameter = res
+                parameter = float(res)
                 numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "integer":
             res = generate_integer_param(instruc, llm, numbers)
             try:
-                parameter = res
+                parameter = int(res)
                 numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "string":
-            print("this needs to be a string")
             parameter = generate_string_param(instruc, llm)
-        result = f"'{param}': {parameter}"
         result_list[param] = parameter
-        print(result)
 
     return result_list
 
 
 def generator(definitions: list[Definition], llm: Small_LLM_Model,
-              prompt: Prompt) -> tuple[str, dict[str, str]]:
+              prompt: Prompt) -> tuple[str, dict[str, Any]]:
     text_names = llm_prompt_names(definitions, prompt)
     final_defi: Definition
     p_name = llm.encode(text_names)
@@ -241,10 +238,7 @@ def generator(definitions: list[Definition], llm: Small_LLM_Model,
     name = find_function_name(token_name, definitions, llm)
     for defi in definitions:
         if name == defi.name:
-            text_params = llm_prompt_params(defi, prompt)
-            p_param = llm.encode(text_params)
-            token_params = p_param[0].tolist()
             final_defi = defi
-    params = find_parameter(token_params, llm, final_defi, prompt)
+    params = find_parameter(llm, final_defi, prompt)
     print(params)
     return name, params

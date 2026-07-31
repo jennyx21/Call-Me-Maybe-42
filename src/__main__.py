@@ -3,25 +3,29 @@ from src.parse import JsonLoader, ValidatorError
 from src.funktiocall import FunctionCall
 from src.generator import generator
 from pathlib import Path
+import argparse
 import json
 
-ROOT = Path(__file__).resolve().parent.parent
 
-prompts = str(ROOT / "data" / "input" / "function_calling_tests.json")
-definitions = str(ROOT / "data" / "input" / "functions_definition.json")
+def pars_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
 
-# prompts = str(ROOT / "moulinette" / "data" /
-# "input" / "function_calling_tests.json")
-# definitions = str(ROOT / "moulinette" / "data" /
-# "input" / "functions_definition.json")
+    parser.add_argument("--input", type=str, required=True,
+                        help="path to prompt file")
+    parser.add_argument("--functions_definition", type=str,
+                        required=True, help="path to function definitions")
+    parser.add_argument("--output", type=str, required=True,
+                        help="path to output file")
+    return parser.parse_args()
 
 
 def main() -> None:
     llm = Small_LLM_Model()
+    args = pars_args()
 
     try:
-        prompt = JsonLoader(prompts).promt_validator()
-        definition = JsonLoader(definitions).definitons_validator()
+        prompt = JsonLoader(args.input).promt_validator()
+        defi = JsonLoader(args.functions_definition).definitons_validator()
     except ValidatorError as e:
         print(e)
         return
@@ -29,7 +33,7 @@ def main() -> None:
     for p in prompt:
         name: str = ""
         parameter: dict[str, str] = {}
-        name, parameter = generator(definition, llm, p)
+        name, parameter = generator(defi, llm, p)
         funktion = FunctionCall(name=name,
                                 arguments=parameter)
         name = funktion.name
@@ -37,10 +41,7 @@ def main() -> None:
 
         results.append({"prompt": p.prompt, "name": name,
                         "parameters": arguments})
-
-    output_path = ROOT / "data" / "output" / "function_calling_result.json"
-    # output_path = ROOT / "moulinette" / "data" / "output" /
-    # "function_calling_result.json"
+    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)

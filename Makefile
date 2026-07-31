@@ -7,7 +7,20 @@ install:
 	uv sync --project llm_sdk
 
 run: 
-	uv run python -m src
+	uv run python -m src --input data/input/function_calling_tests.json\
+		--functions_definition data/input/functions_definition.json\
+		--output data/output/function_calling_tests.json
+
+clean:
+	rm -rf .mypy_cache
+	rm -rf __pycache__
+	rm -rf src/.mypy_cache
+	rm -rf src/__pycache__
+
+debug:
+	uv run python -m pdb -m src --input data/input/function_calling_tests.json\
+		--functions_definition data/input/functions_definition.json\
+		--output data/output/function_calling_tests.json
 
 lint:
 	uv run flake8 src --exclude .venv\
