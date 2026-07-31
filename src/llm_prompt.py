@@ -34,12 +34,9 @@ User:
     return instructions
 
 
-def llm_prompt_params(
-    definition: Definition,
-    prompt: Prompt,
-    parameter_name: str,
-    known_arguments: dict[str, Any],
-) -> str:
+def llm_prompt_params(definition: Definition, prompt: Prompt,
+                      parameter_name: str,
+                      known_arguments: dict[str, Any]) -> str:
     parameter = definition.parameters[parameter_name]
     parameters = "\n".join(
         f"- {name}: {info.type}"

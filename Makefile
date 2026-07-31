@@ -35,6 +35,9 @@ lint:
 		--check-untyped-defs
 
 lint-strict: 
-	flake8 . --exclude llm_sdk
-	mypy . --exclude llm_sdk\
+	uv run flake8 src --exclude .venv\
+			--exclude llm_sdk\
+			--exclude moulinette
+	uv run mypy . --exclude llm_sdk\
+		--exclude moulinette\
 		--strict

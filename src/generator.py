@@ -17,6 +17,7 @@ class ParameterExtractionError(ValueError):
 def find_function_name(instruc: list[int],
                        definitions: list[Definition],
                        llm: Small_LLM_Model) -> str:
+    """Generate the function name using constrained decoding."""
     generated = []
     i = 0
     while i < 100:
@@ -43,6 +44,7 @@ def find_function_name(instruc: list[int],
 
 def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
                           numbers: list[Any]) -> str:
+    """Generate a floating-point parameter from the prompt."""
     generated: list[int] = []
 
     while 1:
@@ -68,6 +70,7 @@ def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
 
 def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
                            numbers: list[Any]) -> str:
+    """Generate an integer parameter from the prompt."""
     generated: list[int] = []
 
     while 1:
@@ -92,7 +95,7 @@ def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
 
 
 def json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
-    """Return (valid_prefix, complete) for a JSON string scalar."""
+    """Return whether a JSON string prefix is valid and complete."""
     if not raw_value.startswith('"'):
         return False, False
 
@@ -117,6 +120,7 @@ def json_string_prefix_state(raw_value: str) -> tuple[bool, bool]:
 def highest_valid_string_token(input_tokens: list[int],
                                generated_tokens: list[int],
                                llm: Small_LLM_Model) -> tuple[int, str, bool]:
+    """Return the highest-scoring token that keeps the JSON string valid."""
     logits = llm.get_logits_from_input_ids(input_tokens)
     previous_raw_value = llm.decode(generated_tokens)
 
@@ -181,6 +185,7 @@ def generate_string_param(prompt_text: list[int], llm: Small_LLM_Model,
 def find_parameter(llm: Small_LLM_Model,
                    definition: Definition,
                    prompt: Prompt) -> dict[str, str | float | int]:
+    """Extract all parameters required by the selected function."""
     result_list: dict[str, str | float | int] = {}
     numbers = re.findall(r"\d+", prompt.prompt)
     parameter: str | float | int
@@ -212,6 +217,8 @@ def find_parameter(llm: Small_LLM_Model,
 
 def generator(definitions: list[Definition], llm: Small_LLM_Model,
               prompt: Prompt) -> tuple[str, dict[str, Any]]:
+    """Generate the function call by selecting a function and
+      its parameters."""
     text_names = llm_prompt_names(definitions, prompt)
     final_defi: Definition
     p_name = llm.encode(text_names)

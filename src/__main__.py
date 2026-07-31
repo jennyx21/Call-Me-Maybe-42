@@ -8,6 +8,7 @@ import json
 
 
 def pars_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--input", type=str, required=True,
@@ -20,6 +21,7 @@ def pars_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    """Load inputs, generate function calls, and write the results."""
     llm = Small_LLM_Model()
     args = pars_args()
 
