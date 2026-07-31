@@ -1,6 +1,6 @@
 
-export UV_CACHE_DIR=/goinfre/$USER/uv-cache uv sync
-export HF_HOME=/goinfre/$USER/huggingface
+# export UV_CACHE_DIR=/goinfre/$USER/uv-cache uv sync
+# export HF_HOME=/goinfre/$USER/huggingface
 
 install:
 	uv sync
