@@ -1,7 +1,7 @@
 from src.parse import Definition, Prompt
 
 
-def llm_prompt_names(definitions: list[Definition], prompt: Prompt):
+def llm_prompt_names(definitions: list[Definition], prompt: Prompt) -> str:
     instructions = """\
 <|im_start|>system
 You are a function calling AI.
@@ -32,7 +32,7 @@ User:
     return instructions
 
 
-def llm_prompt_params(definition: Definition, prompt: Prompt):
+def llm_prompt_params(definition: Definition, prompt: Prompt) -> str:
     instructions = """\
 <|im_start|>system.
 

@@ -10,8 +10,11 @@ run:
 	uv run python -m src
 
 lint:
-	flake8 . --exclude llm_sdk
-	mypy . --exclude llm_sdk\
+	uv run flake8 src --exclude .venv\
+			--exclude llm_sdk\
+			--exclude moulinette
+	uv run mypy . --exclude llm_sdk\
+		--exclude moulinette\
 		--warn-return-any \
 		--warn-unused-ignores \
 		--ignore-missing-imports \

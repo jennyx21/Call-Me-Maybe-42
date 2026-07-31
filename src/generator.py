@@ -16,7 +16,7 @@ class ParameterExtractionError(ValueError):
 
 def find_function_name(instruc: list[int],
                        definitions: list[Definition],
-                       llm: Small_LLM_Model):
+                       llm: Small_LLM_Model) -> str:
     generated = []
     i = 0
     while i < 100:
@@ -36,14 +36,14 @@ def find_function_name(instruc: list[int],
         generated.append(next_token)
         for defi in definitions:
             if llm.decode(generated) == defi.name:
-                return llm.decode(generated)
+                return str(llm.decode(generated))
         i += 1
-    return llm.decode(generated)
+    return str(llm.decode(generated))
 
 
 def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
-                          numbers: list[Any]):
-    generated = []
+                          numbers: list[Any]) -> str:
+    generated: list[int] = []
 
     while 1:
         allowed = []
@@ -58,17 +58,17 @@ def generate_number_param(instruc: list[int], llm: Small_LLM_Model,
         try:
             float(llm.decode(next_token))
         except ValueError:
-            return llm.decode(generated)
+            return str(llm.decode(generated))
         if llm.decode(generated) in numbers:
-            return llm.decode(generated)
+            return str(llm.decode(generated))
 
         instruc.append(next_token)
         generated.append(next_token)
 
 
 def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
-                           numbers: list[Any]):
-    generated = []
+                           numbers: list[Any]) -> str:
+    generated: list[int] = []
 
     while 1:
         allowed = []
@@ -83,9 +83,9 @@ def generate_integer_param(instruc: list[int], llm: Small_LLM_Model,
         try:
             int(llm.decode(next_token))
         except ValueError:
-            return llm.decode(generated)
+            return str(llm.decode(generated))
         if llm.decode(generated) in numbers:
-            return llm.decode(generated)
+            return str(llm.decode(generated))
 
         instruc.append(next_token)
         generated.append(next_token)
@@ -152,7 +152,7 @@ def highest_valid_string_token(
 
 
 def generate_string_param(
-    prompt_text: str,
+    prompt_text: list[int],
     llm: Small_LLM_Model,
     max_tokens: int = 128,
 ) -> str:
@@ -198,7 +198,8 @@ def generate_string_param(
 
 
 def find_parameter(instruc: list[int], llm: Small_LLM_Model,
-                   definition: Definition, prompt: Prompt):
+                   definition: Definition,
+                   prompt: Prompt) -> dict[str, str]:
     result_list = {}
     numbers = re.findall(r"\d+", prompt.prompt)
 
@@ -210,14 +211,14 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
         if definition.parameters[param].type == "number":
             res = generate_number_param(instruc, llm, numbers)
             try:
-                parameter = float(res)
+                parameter = res
                 numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "integer":
             res = generate_integer_param(instruc, llm, numbers)
             try:
-                parameter = int(res)
+                parameter = res
                 numbers.remove(res)
             except Exception:
                 continue
@@ -232,7 +233,7 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
 
 
 def generator(definitions: list[Definition], llm: Small_LLM_Model,
-              prompt: Prompt):
+              prompt: Prompt) -> tuple[str, dict[str, str]]:
     text_names = llm_prompt_names(definitions, prompt)
     final_defi: Definition
     p_name = llm.encode(text_names)

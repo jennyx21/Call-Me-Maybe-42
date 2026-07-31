@@ -1,4 +1,5 @@
 import json
+from typing import Any
 from pydantic import BaseModel
 
 
@@ -30,7 +31,7 @@ class JsonLoader:
         self.file = file_path
         self.data = self.load()
 
-    def load(self) -> list[str]:
+    def load(self) -> list[dict[str, Any]]:
         try:
             with open(self.file) as f:
                 daten = json.load(f)

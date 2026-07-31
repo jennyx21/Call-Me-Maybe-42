@@ -16,7 +16,7 @@ definitions = str(ROOT / "data" / "input" / "functions_definition.json")
 # "input" / "functions_definition.json")
 
 
-def main():
+def main() -> None:
     llm = Small_LLM_Model()
 
     try:
@@ -27,11 +27,11 @@ def main():
         return
     results = []
     for p in prompt:
+        name: str = ""
+        parameter: dict[str, str] = {}
         name, parameter = generator(definition, llm, p)
-        output_raw = {"name": name,
-                      "parameters": parameter}
-        funktion = FunctionCall(name=output_raw["name"],
-                                arguments=output_raw["parameters"])
+        funktion = FunctionCall(name=name,
+                                arguments=parameter)
         name = funktion.name
         arguments = funktion.arguments
 
