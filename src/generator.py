@@ -9,6 +9,7 @@ import re
 HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
 SIMPLE_ESCAPES = frozenset('"\\/bfnrt')
 
+
 class ParameterExtractionError(ValueError):
     """Raised when a parameter cannot be extracted under its constraints."""
 
@@ -205,17 +206,16 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
     parameter = ""
 
     for param in definition.parameters:
-        instruc_cp = instruc.copy()
         print(param)
         if definition.parameters[param].type == "number":
-            res = generate_number_param(instruc_cp, llm, numbers)
+            res = generate_number_param(instruc, llm, numbers)
             try:
                 parameter = float(res)
                 numbers.remove(res)
             except Exception:
                 continue
         elif definition.parameters[param].type == "integer":
-            res = generate_integer_param(instruc_cp, llm, numbers)
+            res = generate_integer_param(instruc, llm, numbers)
             try:
                 parameter = int(res)
                 numbers.remove(res)
@@ -223,7 +223,7 @@ def find_parameter(instruc: list[int], llm: Small_LLM_Model,
                 continue
         elif definition.parameters[param].type == "string":
             print("this needs to be a string")
-            parameter = generate_string_param(instruc_cp, llm)
+            parameter = generate_string_param(instruc, llm)
         result = f"'{param}': {parameter}"
         result_list[param] = parameter
         print(result)
@@ -247,4 +247,3 @@ def generator(definitions: list[Definition], llm: Small_LLM_Model,
     params = find_parameter(token_params, llm, final_defi, prompt)
     print(params)
     return name, params
-
